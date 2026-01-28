@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-demo:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Import sanity check
+        run: |
+          python -c "from src.simulate import run_simulation; print('Import OK')"
+
+      - name: Run quick test (short sim)
+        run: |
+          python - << 'PY'
+          from src.simulate import run_simulation
+          # short run so CI is fast
+          run_simulation(duration=1.0, steps=300, out_dir="outputs")
+          print("Short simulation OK")
+          PY
+
+      - name: Upload outputs (plots)
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs-python-${{ matrix.python-version }}
+          path: outputs/
+          if-no-files-found: warn
