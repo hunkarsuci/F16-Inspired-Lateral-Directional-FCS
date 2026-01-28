@@ -1,6 +1,7 @@
 # F-16-Inspired Lateral-Directional Flight Control System (Simplified)
 
 ![CI](https://github.com/hunkarsuci/F16-Inspired-Lateral-Directional-FCS/actions/workflows/ci.yml/badge.svg)
+[![Release](https://img.shields.io/github/v/release/hunkarsuci/F16-Inspired-Lateral-Directional-FCS)](https://github.com/hunkarsuci/F16-Inspired-Lateral-Directional-FCS/releases)
 
 A simplified, F-16-inspired lateral-directional flight control system simulation
 with command shaping, state feedback, and second-order actuator dynamics.
