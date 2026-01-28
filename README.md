@@ -22,6 +22,12 @@ On every push and pull request, the CI pipeline:
 
 This ensures the control architecture, actuator model, and simulation remain functional across Python versions.
 
+## Releases
+
+You can download pre-generated plots and full output bundles from the **Releases** page:
+- latest release includes `outputs/*.png`
+- compressed bundles: `outputs-<version>.tar.gz` (and `architecture-<version>.tar.gz`)
+
 ## Running the simulation
 
 ```bash
