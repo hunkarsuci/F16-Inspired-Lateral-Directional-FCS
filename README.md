@@ -9,11 +9,6 @@ with command shaping, state feedback, and second-order actuator dynamics.
 
 ![System Architecture](architecture/f16_ld_fcs_architecture.png)
 
-## Running the simulation
-
-```bash
-python scripts/run_demo.py
-
 ## Continuous Integration
 
 This project uses **GitHub Actions** for continuous integration.
@@ -25,4 +20,11 @@ On every push and pull request, the CI pipeline:
 - uploads generated plots as build artifacts
 
 This ensures the control architecture, actuator model, and simulation remain functional across Python versions.
+
+## Running the simulation
+
+```bash
+python scripts/run_demo.py
+
+
 
