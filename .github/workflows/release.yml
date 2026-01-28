@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # triggers on tags like v0.1.0
+
+permissions:
+  contents: write   # required to create releases
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run simulation (generate plots)
+        run: |
+          python - << 'PY'
+          from src.simulate import run_simulation
+          run_simulation(duration=10.0, steps=5000, out_dir="outputs")
+          print("Generated outputs")
+          PY
+
+      - name: Bundle artifacts
+        run: |
+          mkdir -p dist
+          tar -czf dist/outputs-${{ github.ref_name }}.tar.gz outputs
+          if [ -d "architecture" ]; then
+            tar -czf dist/architecture-${{ github.ref_name }}.tar.gz architecture
+          fi
+
+      - name: Create GitHub Release + upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            outputs/*.png
+            dist/*.tar.gz
+          generate_release_notes: true
