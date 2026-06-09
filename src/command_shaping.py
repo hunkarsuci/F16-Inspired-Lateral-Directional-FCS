@@ -2,10 +2,18 @@ import numpy as np
 
 def first_order(x: float, u: float, tau: float, dt: float) -> float:
     """First-order low-pass: x_dot = (u - x)/tau"""
+    if dt <= 0.0 or not np.isfinite(dt):
+        raise ValueError("dt must be a positive finite time step")
+    if tau <= 0.0 or not np.isfinite(tau):
+        raise ValueError("tau must be positive and finite")
     return x + (u - x) * (dt / max(tau, 1e-9))
 
 def rate_limit(prev: float, cmd: float, rate_per_sec: float, dt: float) -> float:
     """Rate limit scalar signal."""
+    if dt <= 0.0 or not np.isfinite(dt):
+        raise ValueError("dt must be a positive finite time step")
+    if rate_per_sec <= 0.0 or not np.isfinite(rate_per_sec):
+        raise ValueError("rate_per_sec must be positive and finite")
     max_step = rate_per_sec * dt
     return prev + float(np.clip(cmd - prev, -max_step, max_step))
 
@@ -38,6 +46,21 @@ class CommandShaper:
         self.crossfeed_limit = crossfeed_limit
         self.tau_cross_smooth = tau_cross_smooth
 
+        positive_values = {
+            "stick_rate": self.stick_rate,
+            "pedal_rate": self.pedal_rate,
+            "tau_pilot_1": self.tau1,
+            "tau_pilot_2": self.tau2,
+            "t_crossfeed": self.Tc,
+            "crossfeed_limit": self.crossfeed_limit,
+            "tau_cross_smooth": self.tau_cross_smooth,
+        }
+        for name, value in positive_values.items():
+            if value <= 0.0 or not np.isfinite(value):
+                raise ValueError(f"{name} must be positive and finite")
+        if not np.isfinite(self.Kc):
+            raise ValueError("k_crossfeed must be finite")
+
         # internal states
         self.stick_cmd = 0.0
         self.pedal_cmd = 0.0
@@ -59,6 +82,9 @@ class CommandShaper:
         )
 
     def step(self, stick_raw: float, pedal_raw: float, dt: float):
+        if not np.all(np.isfinite([stick_raw, pedal_raw])):
+            raise ValueError("pilot commands must be finite")
+
         # Rate limit
         self.stick_cmd = rate_limit(self.stick_cmd, stick_raw, self.stick_rate, dt)
         self.pedal_cmd = rate_limit(self.pedal_cmd, pedal_raw, self.pedal_rate, dt)

@@ -19,17 +19,41 @@ class SecondOrderActuator2Ch:
         rate_max: np.ndarray,
         acc_max: np.ndarray,
     ):
-        self.w0 = np.array(w0, dtype=float)
-        self.zeta = np.array(zeta, dtype=float)
-        self.delta_max = np.array(delta_max, dtype=float)
-        self.rate_max = np.array(rate_max, dtype=float)
-        self.acc_max = np.array(acc_max, dtype=float)
+        self.w0 = self._two_channel_vector(w0, "w0")
+        self.zeta = self._two_channel_vector(zeta, "zeta")
+        self.delta_max = self._two_channel_vector(delta_max, "delta_max")
+        self.rate_max = self._two_channel_vector(rate_max, "rate_max")
+        self.acc_max = self._two_channel_vector(acc_max, "acc_max")
+
+        for name, values in (
+            ("w0", self.w0),
+            ("zeta", self.zeta),
+            ("delta_max", self.delta_max),
+            ("rate_max", self.rate_max),
+            ("acc_max", self.acc_max),
+        ):
+            if np.any(values <= 0.0):
+                raise ValueError(f"{name} must contain positive values")
+
         self.x = np.zeros(4, dtype=float)
+
+    @staticmethod
+    def _two_channel_vector(values: np.ndarray, name: str) -> np.ndarray:
+        array = np.asarray(values, dtype=float)
+        if array.shape != (2,):
+            raise ValueError(f"{name} must be a two-element vector")
+        if not np.all(np.isfinite(array)):
+            raise ValueError(f"{name} must contain finite values")
+        return array
 
     def reset(self):
         self.x[:] = 0.0
 
     def step(self, u_cmd: np.ndarray, dt: float) -> np.ndarray:
+        if dt <= 0.0 or not np.isfinite(dt):
+            raise ValueError("dt must be a positive finite time step")
+
+        u_cmd = self._two_channel_vector(u_cmd, "u_cmd")
         d1, d1_dot, d2, d2_dot = self.x
         u1, u2 = float(u_cmd[0]), float(u_cmd[1])
 

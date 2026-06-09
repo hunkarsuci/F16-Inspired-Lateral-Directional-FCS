@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from src.actuators import SecondOrderActuator2Ch
 
 def test_actuator_respects_limits():
@@ -22,3 +23,14 @@ def test_actuator_respects_limits():
     d1, d1_dot, d2, d2_dot = act.x
     assert abs(d1_dot) <= 1.5000001
     assert abs(d2_dot) <= 1.5000001
+
+
+def test_actuator_rejects_invalid_limits():
+    with pytest.raises(ValueError):
+        SecondOrderActuator2Ch(
+            w0=np.array([60.0, 60.0]),
+            zeta=np.array([0.7, 0.7]),
+            delta_max=np.array([0.4, -0.4]),
+            rate_max=np.array([1.5, 1.5]),
+            acc_max=np.array([50.0, 50.0]),
+        )
