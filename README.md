@@ -34,19 +34,9 @@ The project demonstrates command shaping, state-feedback control, second-order a
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A["Pilot Inputs<br/>stick, pedal"] --> B["Command Shaper<br/>rate limits + 2-stage LPF"]
-    B --> C["Washout Crossfeed<br/>pedal transient coupling"]
-    B --> D["State-Feedback Controller<br/>u_cmd = H*u_pilot - K*x + crossfeed"]
-    C --> D
-    D --> E["Command Saturation"]
-    E --> F["2-Channel 2nd-Order Actuator<br/>position, rate, acceleration limits"]
-    F --> G["Linear Plant<br/>x_dot = A*x + B*u"]
-    G --> H["Aircraft States<br/>beta, p, r, phi"]
-    H --> D
-    H --> I["Outputs<br/>plots + 3D animation"]
-```
+![System architecture](architecture/system_architecture.svg)
+
+The diagram shows one closed-loop system architecture with expanded detail views for the flight-control computer and the simulation/output path. It is maintained as a versioned SVG asset so the README renders consistently without depending on Mermaid support.
 
 ## Model
 
@@ -106,6 +96,8 @@ The tests cover actuator limits, command shaping, controller saturation and vali
     codeql.yml
     release.yml
     scorecard.yml
+architecture/
+  system_architecture.svg
 scripts/
   run_demo.py
 src/

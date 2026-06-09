@@ -34,9 +34,9 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-      - name: Run demo
+      - name: Run demo smoke test
         run: |
-          python scripts/run_demo.py
+          python scripts/run_demo.py --duration 3 --steps 300 --fps 12 --max-frames 24
 
       - name: Upload outputs (plots)
         uses: actions/upload-artifact@v4

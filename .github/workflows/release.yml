@@ -27,13 +27,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run simulation (generate plots)
+      - name: Run demo (generate artifacts)
         run: |
-          python - << 'PY'
-          from src.simulate import run_simulation
-          run_simulation(duration=10.0, steps=5000, out_dir="outputs")
-          print("Generated outputs")
-          PY
+          python scripts/run_demo.py --duration 30 --steps 5000 --fps 30 --max-frames 240
 
       - name: Bundle artifacts
         run: |
@@ -48,5 +44,6 @@ jobs:
         with:
           files: |
             outputs/*.png
+            outputs/*.gif
             dist/*.tar.gz
           generate_release_notes: true

@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="980" viewBox="0 0 1320 980" role="img" aria-labelledby="title desc">
+  <title id="title">F-16-Inspired Lateral-Directional Flight Control System Architecture</title>
+  <desc id="desc">Professional block diagram showing the closed-loop simulation architecture, flight-control computer detail, and output pipeline.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="feedbackArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 18; }
+      .title { font: 700 28px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 14px Arial, sans-serif; fill: #64748b; }
+      .panel-title { font: 700 18px Arial, sans-serif; fill: #0f172a; }
+      .block-title { font: 700 15px Arial, sans-serif; fill: #0f172a; }
+      .block-text { font: 400 12px Arial, sans-serif; fill: #334155; }
+      .label { font: 600 12px Arial, sans-serif; fill: #475569; }
+      .small { font: 400 11px Arial, sans-serif; fill: #64748b; }
+      .arrow { stroke: #334155; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .feedback { stroke: #7c3aed; stroke-width: 2.2; fill: none; marker-end: url(#feedbackArrow); stroke-dasharray: 7 5; }
+      .callout { stroke: #64748b; stroke-width: 1.8; fill: none; stroke-dasharray: 5 5; marker-end: url(#arrow); }
+      .input { fill: #e0f2fe; stroke: #0284c7; }
+      .control { fill: #ede9fe; stroke: #7c3aed; }
+      .actuator { fill: #fef3c7; stroke: #d97706; }
+      .plant { fill: #dcfce7; stroke: #16a34a; }
+      .state { fill: #fee2e2; stroke: #dc2626; }
+      .output { fill: #f1f5f9; stroke: #475569; }
+      .data { fill: #fefce8; stroke: #ca8a04; }
+      .qa { fill: #fdf2f8; stroke: #db2777; }
+      .block { stroke-width: 1.5; rx: 12; }
+      .pill { fill: #f8fafc; stroke: #cbd5e1; rx: 16; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1320" height="980"/>
+  <text x="50" y="54" class="title">F-16-Inspired Lateral-Directional FCS Architecture</text>
+  <text x="50" y="80" class="subtitle">One closed-loop educational simulation. Lower panels are expanded detail views of the FCC and simulation/output path.</text>
+
+  <rect x="40" y="112" width="1240" height="310" class="panel"/>
+  <text x="70" y="148" class="panel-title">Closed-Loop System Architecture</text>
+
+  <rect x="70" y="190" width="145" height="92" class="block input"/>
+  <text x="92" y="218" class="block-title">Pilot Profile</text>
+  <text x="88" y="243" class="block-text">stick_raw</text>
+  <text x="88" y="263" class="block-text">pedal_raw</text>
+
+  <rect x="270" y="190" width="420" height="92" class="block control"/>
+  <text x="425" y="218" class="block-title">Flight-Control Computer</text>
+  <text x="315" y="243" class="block-text">command shaping, washout crossfeed, state feedback law, command saturation</text>
+  <text x="315" y="263" class="block-text">expanded in the FCC detail view below</text>
+
+  <rect x="745" y="190" width="160" height="92" class="block actuator"/>
+  <text x="773" y="218" class="block-title">Actuators</text>
+  <text x="766" y="243" class="block-text">2nd-order model</text>
+  <text x="766" y="263" class="block-text">pos/rate/acc limits</text>
+
+  <rect x="960" y="190" width="165" height="92" class="block plant"/>
+  <text x="1004" y="218" class="block-title">Plant</text>
+  <text x="986" y="243" class="block-text">x_dot = A*x + B*u</text>
+  <text x="986" y="263" class="block-text">Euler integration</text>
+
+  <rect x="1036" y="328" width="185" height="62" class="block state"/>
+  <text x="1064" y="354" class="block-title">State Vector</text>
+  <text x="1058" y="376" class="block-text">[beta, p, r, phi]^T</text>
+
+  <path d="M215 236 L270 236" class="arrow"/>
+  <path d="M690 236 L745 236" class="arrow"/>
+  <path d="M905 236 L960 236" class="arrow"/>
+  <path d="M1043 282 L1100 328" class="arrow"/>
+  <path d="M1036 360 C730 410 610 355 598 282" class="feedback"/>
+  <text x="707" y="382" class="label">state feedback</text>
+
+  <path d="M480 282 C420 348 300 392 260 452" class="callout"/>
+  <text x="272" y="398" class="small">FCC expanded view</text>
+  <path d="M1042 282 C1048 360 960 402 990 452" class="callout"/>
+  <text x="1008" y="398" class="small">plant/output expanded view</text>
+
+  <rect x="40" y="452" width="610" height="430" class="panel"/>
+  <text x="70" y="488" class="panel-title">Expanded View: Flight-Control Computer</text>
+
+  <rect x="78" y="528" width="116" height="62" class="block input"/>
+  <text x="101" y="554" class="block-title">Stick</text>
+  <text x="96" y="575" class="block-text">command</text>
+
+  <rect x="78" y="644" width="116" height="62" class="block input"/>
+  <text x="100" y="670" class="block-title">Pedal</text>
+  <text x="96" y="691" class="block-text">command</text>
+
+  <rect x="238" y="528" width="128" height="62" class="block control"/>
+  <text x="266" y="554" class="block-title">Rate Limit</text>
+  <text x="262" y="575" class="block-text">STICK_RATE</text>
+
+  <rect x="238" y="644" width="128" height="62" class="block control"/>
+  <text x="266" y="670" class="block-title">Rate Limit</text>
+  <text x="262" y="691" class="block-text">PEDAL_RATE</text>
+
+  <rect x="410" y="528" width="145" height="62" class="block control"/>
+  <text x="433" y="554" class="block-title">2-Stage LPF</text>
+  <text x="436" y="575" class="block-text">tau1, tau2</text>
+
+  <rect x="410" y="644" width="145" height="62" class="block control"/>
+  <text x="433" y="670" class="block-title">2-Stage LPF</text>
+  <text x="436" y="691" class="block-text">tau1, tau2</text>
+
+  <rect x="238" y="762" width="145" height="66" class="block control"/>
+  <text x="270" y="789" class="block-title">Washout</text>
+  <text x="254" y="811" class="block-text">Kc*(pedal - lag)</text>
+
+  <rect x="430" y="762" width="145" height="66" class="block control"/>
+  <text x="458" y="789" class="block-title">Crossfeed</text>
+  <text x="462" y="811" class="block-text">limit + smooth</text>
+
+  <rect x="430" y="410" width="160" height="34" class="pill"/>
+  <text x="451" y="432" class="small">Zoom of top FCC block</text>
+
+  <rect x="730" y="452" width="550" height="430" class="panel"/>
+  <text x="760" y="488" class="panel-title">Expanded View: Simulation Outputs and Verification</text>
+
+  <rect x="1000" y="410" width="210" height="34" class="pill"/>
+  <text x="1020" y="432" class="small">Zoom of plant/output path</text>
+
+  <rect x="760" y="532" width="142" height="70" class="block control"/>
+  <text x="794" y="560" class="block-title">Command</text>
+  <text x="787" y="583" class="block-text">u_cmd limit</text>
+
+  <rect x="954" y="532" width="160" height="70" class="block actuator"/>
+  <text x="980" y="560" class="block-title">Actuator</text>
+  <text x="977" y="583" class="block-text">delta, delta_dot</text>
+
+  <rect x="760" y="668" width="160" height="76" class="block plant"/>
+  <text x="806" y="696" class="block-title">Plant</text>
+  <text x="785" y="719" class="block-text">A_PLANT, B_PLANT</text>
+
+  <rect x="972" y="668" width="168" height="76" class="block data"/>
+  <text x="1017" y="696" class="block-title">History</text>
+  <text x="998" y="719" class="block-text">time, states, commands</text>
+
+  <rect x="760" y="790" width="155" height="58" class="block output"/>
+  <text x="799" y="814" class="block-title">Plot</text>
+  <text x="781" y="834" class="block-text">roll rate, bank angle</text>
+
+  <rect x="962" y="790" width="178" height="58" class="block output"/>
+  <text x="999" y="814" class="block-title">3D Animation</text>
+  <text x="994" y="834" class="block-text">F-16C mesh + telemetry</text>
+
+  <rect x="1172" y="668" width="76" height="180" class="block qa"/>
+  <text x="1191" y="728" class="block-title">Tests</text>
+  <text x="1192" y="751" class="block-text">pytest</text>
+  <text x="1192" y="771" class="block-text">CI</text>
+
+  <path d="M194 559 L238 559" class="arrow"/>
+  <path d="M366 559 L410 559" class="arrow"/>
+  <path d="M194 675 L238 675" class="arrow"/>
+  <path d="M366 675 L410 675" class="arrow"/>
+  <path d="M482 706 C480 744 424 774 383 795" class="arrow"/>
+  <path d="M383 795 L430 795" class="arrow"/>
+  <path d="M555 559 C635 558 675 536 730 532" class="arrow"/>
+  <text x="600" y="536" class="small">u_cmd to actuator path</text>
+
+  <path d="M902 567 L954 567" class="arrow"/>
+  <path d="M1034 602 C1035 640 940 674 920 706" class="arrow"/>
+  <path d="M920 706 L972 706" class="arrow"/>
+  <path d="M1056 744 L838 790" class="arrow"/>
+  <path d="M1056 744 L1051 790" class="arrow"/>
+  <path d="M1140 706 L1172 706" class="arrow"/>
+  <path d="M1140 820 L1172 820" class="arrow"/>
+
+  <rect x="70" y="906" width="1180" height="44" class="pill"/>
+  <text x="92" y="934" class="small">Internal units are radians and radians/second. Plots and animation telemetry convert selected outputs to degrees for readability. The visual aircraft is presentation geometry driven by the simplified lateral-directional state history.</text>
+</svg>
