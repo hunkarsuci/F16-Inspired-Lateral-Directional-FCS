@@ -58,6 +58,47 @@ delta_ddot = -2*zeta*w0*delta_dot - w0^2*delta + w0^2*u_cmd
 
 Each actuator channel enforces configured acceleration, rate, and position limits before passing deflection into the plant.
 
+## Learning Guide
+
+This repository is designed to help learners connect flight-control theory with runnable Python code.
+
+### Key Concepts
+
+- **Lateral-directional dynamics** describe sideways and rotational motion: sideslip-like state `beta`, roll rate `p`, yaw rate `r`, and bank angle `phi`.
+- **State-space modeling** represents the aircraft as `x_dot = A*x + B*u`, which is a standard form used in controls, simulation, and analysis.
+- **Command shaping** prevents unrealistically sharp pilot commands by applying rate limits and low-pass filters before the controller sees the input.
+- **Washout crossfeed** passes transient pedal motion into the lateral channel while reducing steady-state coupling.
+- **State feedback** uses measured or simulated aircraft states to stabilize and shape the response: `u = H*u_pilot - K*x + crossfeed`.
+- **Actuator dynamics** matter because real control surfaces cannot move instantly. The second-order actuator model adds bandwidth, damping, rate limits, acceleration limits, and position limits.
+- **Closed-loop simulation** connects pilot input, controller, actuator, plant, and feedback in one time-marching loop.
+
+### How to Read the Code
+
+Start with the files in this order:
+
+1. `src/params.py`: plant matrices, controller gains, filter constants, and actuator limits.
+2. `src/plant.py`: the linear state-space aircraft model.
+3. `src/command_shaping.py`: rate limiting, filtering, and washout crossfeed.
+4. `src/controller.py`: state-feedback control law and command saturation.
+5. `src/actuators.py`: second-order actuator dynamics and physical limits.
+6. `src/simulate.py`: closed-loop integration and response logging.
+7. `src/visualization.py`: plot/animation-oriented 3D attitude visualization.
+
+### Suggested Experiments
+
+- Change `STICK_RATE` or `PEDAL_RATE` and observe how sharper/slower pilot commands affect roll response.
+- Increase or decrease `U_CMD_LIMIT` to see how command saturation changes the response.
+- Modify `W0` and `ZETA` to compare fast, slow, underdamped, and well-damped actuator behavior.
+- Adjust `K_GAINS` carefully and observe how feedback gains affect stability, overshoot, and settling.
+- Run `create_aircraft_animation(..., aircraft_model="concept")` to compare visualization styles without changing the control model.
+
+### What Learners Should Notice
+
+- A stable plant/controller combination can still look unrealistic if actuator limits are ignored.
+- Smooth pilot commands usually produce cleaner closed-loop behavior than abrupt step inputs.
+- Feedback gains are powerful, but aggressive gains can create oscillation, saturation, or unrealistic actuator demand.
+- A professional simulation separates model parameters, control logic, actuator behavior, visualization, and tests.
+
 ## Run
 
 ```bash
