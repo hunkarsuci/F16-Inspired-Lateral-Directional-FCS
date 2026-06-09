@@ -32,7 +32,7 @@ jobs:
           python -c "from src.simulate import run_simulation; print('Import OK')"
 
       - name: Run tests
-        run: pytest -q
+        run: python -m pytest -q
 
       - name: Run demo smoke test
         run: |
