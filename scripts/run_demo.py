@@ -11,7 +11,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.simulate import run_simulation
-from src.visualization import create_aircraft_animation
+from src.visualization import create_aircraft_animation, create_lateral_flight_3d_html
 
 
 def parse_args():
@@ -40,7 +40,13 @@ def main():
         max_frames=args.max_frames,
         aircraft_model=args.aircraft_model,
     )
+    html_path = create_lateral_flight_3d_html(
+        history,
+        out_path=os.path.join(args.out_dir, "f16_lateral_flight_3d.html"),
+        aircraft_model=args.aircraft_model,
+    )
     print(f"SUCCESS: 3D animation saved to: {animation_path}")
+    print(f"SUCCESS: Browser 3D lateral-flight animation saved to: {html_path}")
 
 if __name__ == "__main__":
     main()

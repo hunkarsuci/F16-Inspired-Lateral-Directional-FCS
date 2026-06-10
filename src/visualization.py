@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -454,3 +455,322 @@ def create_aircraft_animation(
     animation.save(out_path, writer=PillowWriter(fps=fps))
     plt.close(fig)
     return os.path.abspath(out_path)
+
+
+def create_lateral_flight_3d_html(
+    history: dict,
+    out_path: str = "outputs/f16_lateral_flight_3d.html",
+    max_samples: int = 900,
+    aircraft_model: str = "f16c",
+) -> str:
+    """Create a self-contained browser animation of lateral F-16 flight."""
+    if aircraft_model not in AIRCRAFT_MODELS:
+        supported = ", ".join(sorted(AIRCRAFT_MODELS))
+        raise ValueError(f"aircraft_model must be one of: {supported}")
+    if max_samples < 2:
+        raise ValueError("max_samples must be at least 2")
+
+    time_s = np.asarray(history["time_s"], dtype=float)
+    phi = np.asarray(history["phi_rad"], dtype=float)
+    r = np.asarray(history["r_rad_s"], dtype=float)
+    beta = np.asarray(history["beta_rad"], dtype=float)
+    p = np.asarray(history["p_rad_s"], dtype=float)
+
+    if (
+        time_s.ndim != 1
+        or phi.shape != time_s.shape
+        or r.shape != time_s.shape
+        or beta.shape != time_s.shape
+        or p.shape != time_s.shape
+    ):
+        raise ValueError("history must contain aligned time_s, beta_rad, p_rad_s, r_rad_s, and phi_rad arrays")
+    if len(time_s) < 2:
+        raise ValueError("history must contain at least two samples")
+
+    dt = np.gradient(time_s)
+    yaw = np.cumsum(r * dt)
+    speed = 1.0
+    x_path = np.cumsum(np.cos(yaw + beta) * speed * dt)
+    y_path = np.cumsum(np.sin(yaw + beta) * speed * dt)
+    z_path = 0.22 * np.sin(0.35 * time_s) + 0.08 * np.sin(phi)
+
+    stride = max(1, int(np.ceil(len(time_s) / max_samples)))
+    sample_idx = np.arange(0, len(time_s), stride)
+
+    model = AIRCRAFT_MODELS[aircraft_model]
+    payload = {
+        "title": model["title"],
+        "surfaces": [
+            {"name": name, "color": color, "points": points.tolist()}
+            for name, color, points in model["surfaces"]
+        ],
+        "noseLine": model["nose_line"].tolist(),
+        "leftWingtip": model["left_wingtip"].reshape(-1, 3)[0].tolist(),
+        "rightWingtip": model["right_wingtip"].reshape(-1, 3)[0].tolist(),
+        "tailpipe": model["tailpipe"].reshape(-1, 3)[0].tolist(),
+        "time": time_s[sample_idx].round(5).tolist(),
+        "roll": phi[sample_idx].round(7).tolist(),
+        "yaw": yaw[sample_idx].round(7).tolist(),
+        "rollRate": p[sample_idx].round(7).tolist(),
+        "yawRate": r[sample_idx].round(7).tolist(),
+        "x": x_path[sample_idx].round(6).tolist(),
+        "y": y_path[sample_idx].round(6).tolist(),
+        "z": z_path[sample_idx].round(6).tolist(),
+    }
+
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    html = _build_lateral_flight_html(payload)
+    with open(out_path, "w", encoding="utf-8") as handle:
+        handle.write(html)
+    return os.path.abspath(out_path)
+
+
+def _build_lateral_flight_html(payload: dict) -> str:
+    payload_json = json.dumps(payload, separators=(",", ":"))
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F-16 Lateral Flight 3D Animation</title>
+<style>
+html,body{{margin:0;width:100%;height:100%;background:#e5edf6;color:#0f172a;font-family:Arial,Helvetica,sans-serif;overflow:hidden}}
+canvas{{display:block;width:100vw;height:100vh;background:linear-gradient(#dbeafe,#f8fafc 58%,#d9f99d 59%,#bef264)}}
+.hud{{position:fixed;left:18px;top:16px;background:rgba(248,250,252,.82);border:1px solid rgba(15,23,42,.18);border-radius:8px;padding:12px 14px;box-shadow:0 12px 32px rgba(15,23,42,.16);backdrop-filter:blur(8px)}}
+.hud h1{{font-size:15px;margin:0 0 8px;font-weight:700;letter-spacing:0}}
+.grid{{display:grid;grid-template-columns:auto auto;gap:5px 14px;font-size:12px}}
+.label{{color:#475569}}
+.controls{{position:fixed;right:18px;bottom:16px;display:flex;gap:8px}}
+button{{height:34px;border:1px solid rgba(15,23,42,.22);border-radius:8px;background:#f8fafc;color:#0f172a;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(15,23,42,.12)}}
+button:hover{{background:#e0f2fe}}
+.speed{{position:fixed;left:18px;bottom:16px;background:rgba(248,250,252,.82);border:1px solid rgba(15,23,42,.18);border-radius:8px;padding:10px 12px;box-shadow:0 8px 20px rgba(15,23,42,.12);display:grid;grid-template-columns:auto 150px auto;gap:10px;align-items:center;font-size:12px}}
+input[type=range]{{accent-color:#2563eb}}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="hud">
+  <h1>F-16 Lateral Flight</h1>
+  <div class="grid">
+    <div class="label">time</div><div id="time">0.0 s</div>
+    <div class="label">bank</div><div id="bank">0.0 deg</div>
+    <div class="label">roll rate</div><div id="rollRate">0.0 deg/s</div>
+    <div class="label">yaw rate</div><div id="yawRate">0.0 deg/s</div>
+  </div>
+</div>
+<div class="speed">
+  <label for="speed">speed</label>
+  <input id="speed" type="range" min="0.1" max="1.5" step="0.05" value="0.35">
+  <span id="speedValue">0.35x</span>
+</div>
+<div class="controls">
+  <button id="playPause" type="button">Pause</button>
+  <button id="restart" type="button">Restart</button>
+</div>
+<script>
+const DATA = {payload_json};
+const canvas = document.getElementById("scene");
+const ctx = canvas.getContext("2d");
+const hud = {{
+  time: document.getElementById("time"),
+  bank: document.getElementById("bank"),
+  rollRate: document.getElementById("rollRate"),
+  yawRate: document.getElementById("yawRate")
+}};
+let width = 0, height = 0, dpr = 1;
+let simTime = DATA.time[0], playing = true, lastStamp = 0, cameraOrbit = 0;
+let playbackSpeed = 0.35;
+const duration = DATA.time[DATA.time.length - 1] - DATA.time[0];
+
+function resize() {{
+  dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}}
+window.addEventListener("resize", resize);
+resize();
+
+function rotateBody(point, roll, yaw) {{
+  const cr = Math.cos(roll), sr = Math.sin(roll);
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const x1 = point[0];
+  const y1 = point[1] * cr - point[2] * sr;
+  const z1 = point[1] * sr + point[2] * cr;
+  return [x1 * cy - y1 * sy, x1 * sy + y1 * cy, z1];
+}}
+
+function worldToCamera(point, focus) {{
+  const orbit = -0.72 + 0.08 * Math.sin(cameraOrbit);
+  const elev = 0.46;
+  const dx = point[0] - focus[0];
+  const dy = point[1] - focus[1];
+  const dz = point[2] - focus[2];
+  const co = Math.cos(orbit), so = Math.sin(orbit);
+  const ce = Math.cos(elev), se = Math.sin(elev);
+  const x = dx * co - dy * so;
+  const y = dx * so + dy * co;
+  const z = dz;
+  return [x, y * ce - z * se, y * se + z * ce + 16];
+}}
+
+function project(point, focus) {{
+  const c = worldToCamera(point, focus);
+  const scale = Math.min(width, height) * 0.78 / Math.max(4, c[2]);
+  return [width * 0.52 + c[0] * scale, height * 0.52 - c[1] * scale, c[2]];
+}}
+
+function transformLocal(point, i) {{
+  const local = rotateBody(point, i.roll, i.yaw);
+  return [local[0] + i.x, local[1] + i.y, local[2] + i.z];
+}}
+
+function interpolateSample(t) {{
+  if (t <= DATA.time[0]) return sampleAt(0, 0);
+  if (t >= DATA.time[DATA.time.length - 1]) return sampleAt(DATA.time.length - 1, DATA.time.length - 1);
+  let hi = 1;
+  while (hi < DATA.time.length && DATA.time[hi] < t) hi++;
+  const lo = hi - 1;
+  const span = Math.max(1e-6, DATA.time[hi] - DATA.time[lo]);
+  return sampleAt(lo, hi, (t - DATA.time[lo]) / span);
+}}
+
+function lerp(a, b, u) {{
+  return a + (b - a) * u;
+}}
+
+function sampleAt(lo, hi, u = 0) {{
+  return {{
+    index: lo,
+    time: lerp(DATA.time[lo], DATA.time[hi], u),
+    roll: lerp(DATA.roll[lo], DATA.roll[hi], u),
+    yaw: lerp(DATA.yaw[lo], DATA.yaw[hi], u),
+    rollRate: lerp(DATA.rollRate[lo], DATA.rollRate[hi], u),
+    yawRate: lerp(DATA.yawRate[lo], DATA.yawRate[hi], u),
+    x: lerp(DATA.x[lo], DATA.x[hi], u),
+    y: lerp(DATA.y[lo], DATA.y[hi], u),
+    z: lerp(DATA.z[lo], DATA.z[hi], u)
+  }};
+}}
+
+function drawPath(sample, focus) {{
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(37,99,235,.82)";
+  ctx.beginPath();
+  const i = sample.index;
+  const start = Math.max(0, i - 220);
+  for (let k = start; k <= i; k++) {{
+    const p = project([DATA.x[k], DATA.y[k], DATA.z[k]], focus);
+    if (k === start) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+  }}
+  ctx.stroke();
+}}
+
+function drawGround(focus) {{
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(71,85,105,.20)";
+  for (let gx = -18; gx <= 18; gx += 3) {{
+    ctx.beginPath();
+    for (let gy = -14; gy <= 14; gy += 2) {{
+      const p = project([focus[0] + gx, focus[1] + gy, -1.2], focus);
+      if (gy === -14) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+    }}
+    ctx.stroke();
+  }}
+  for (let gy = -14; gy <= 14; gy += 2) {{
+    ctx.beginPath();
+    for (let gx = -18; gx <= 18; gx += 3) {{
+      const p = project([focus[0] + gx, focus[1] + gy, -1.2], focus);
+      if (gx === -18) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+    }}
+    ctx.stroke();
+  }}
+}}
+
+function shade(color, depth) {{
+  const alpha = Math.max(.70, Math.min(1, 1.12 - depth * .018));
+  return color + Math.round(alpha * 255).toString(16).padStart(2, "0");
+}}
+
+function drawAircraft(sample, focus) {{
+  const polys = DATA.surfaces.map(surface => {{
+    const world = surface.points.map(point => transformLocal(point, sample));
+    const screen = world.map(point => project(point, focus));
+    const depth = screen.reduce((sum, point) => sum + point[2], 0) / screen.length;
+    return {{screen, depth, color: surface.color}};
+  }}).sort((a, b) => b.depth - a.depth);
+
+  for (const poly of polys) {{
+    ctx.beginPath();
+    poly.screen.forEach((p, idx) => idx ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    ctx.closePath();
+    ctx.fillStyle = shade(poly.color, poly.depth);
+    ctx.strokeStyle = "rgba(2,6,23,.72)";
+    ctx.lineWidth = 1;
+    ctx.fill();
+    ctx.stroke();
+  }}
+
+  const nose = DATA.noseLine.map(point => project(transformLocal(point, sample), focus));
+  ctx.strokeStyle = "#020617";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  nose.forEach((p, idx) => idx ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+  ctx.stroke();
+
+  const tail = transformLocal(DATA.tailpipe, sample);
+  const flameEnd = transformLocal([-2.78 - 0.15 * Math.sin(sample.time * 8.0), 0, -0.07], sample);
+  const a = project(tail, focus), b = project(flameEnd, focus);
+  ctx.strokeStyle = "rgba(249,115,22,.88)";
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(a[0], a[1]);
+  ctx.lineTo(b[0], b[1]);
+  ctx.stroke();
+}}
+
+function draw(timestamp) {{
+  if (!lastStamp) lastStamp = timestamp;
+  const elapsed = timestamp - lastStamp;
+  lastStamp = timestamp;
+  if (playing) {{
+    simTime += elapsed * 0.001 * playbackSpeed;
+    if (simTime > DATA.time[DATA.time.length - 1]) simTime = DATA.time[0] + ((simTime - DATA.time[0]) % duration);
+  }}
+  cameraOrbit += elapsed * 0.00018;
+  const sample = interpolateSample(simTime);
+  const focus = [sample.x, sample.y, sample.z];
+
+  ctx.clearRect(0, 0, width, height);
+  drawGround(focus);
+  drawPath(sample, focus);
+  drawAircraft(sample, focus);
+
+  const deg = 180 / Math.PI;
+  hud.time.textContent = `${{sample.time.toFixed(1)}} s`;
+  hud.bank.textContent = `${{(sample.roll * deg).toFixed(1)}} deg`;
+  hud.rollRate.textContent = `${{(sample.rollRate * deg).toFixed(1)}} deg/s`;
+  hud.yawRate.textContent = `${{(sample.yawRate * deg).toFixed(1)}} deg/s`;
+  requestAnimationFrame(draw);
+}}
+
+document.getElementById("playPause").addEventListener("click", event => {{
+  playing = !playing;
+  event.currentTarget.textContent = playing ? "Pause" : "Play";
+}});
+document.getElementById("restart").addEventListener("click", () => {{
+  simTime = DATA.time[0];
+  playing = true;
+  document.getElementById("playPause").textContent = "Pause";
+}});
+document.getElementById("speed").addEventListener("input", event => {{
+  playbackSpeed = Number(event.currentTarget.value);
+  document.getElementById("speedValue").textContent = `${{playbackSpeed.toFixed(2)}}x`;
+}});
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
+"""

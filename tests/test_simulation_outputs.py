@@ -5,7 +5,7 @@ import pytest
 
 from src.params import DELTA_MAX
 from src.simulate import demo_pilot_inputs, run_simulation
-from src.visualization import create_aircraft_animation
+from src.visualization import create_aircraft_animation, create_lateral_flight_3d_html
 
 
 def test_simulation_returns_finite_limited_history(tmp_path):
@@ -70,3 +70,21 @@ def test_3d_animation_supports_alternate_aircraft_model(tmp_path):
 
     assert os.path.exists(out_path)
     assert os.path.getsize(out_path) > 0
+
+
+def test_browser_lateral_flight_3d_html_is_created(tmp_path):
+    history = run_simulation(duration=0.3, steps=60, out_dir=str(tmp_path))
+    out_path = create_lateral_flight_3d_html(
+        history,
+        out_path=str(tmp_path / "lateral_flight.html"),
+        max_samples=30,
+    )
+
+    assert os.path.exists(out_path)
+    assert os.path.getsize(out_path) > 0
+    html = (tmp_path / "lateral_flight.html").read_text(encoding="utf-8")
+    assert "F-16 Lateral Flight" in html
+    assert "const DATA =" in html
+    assert "playbackSpeed = 0.35" in html
+    assert "interpolateSample" in html
+    assert 'id="speed"' in html

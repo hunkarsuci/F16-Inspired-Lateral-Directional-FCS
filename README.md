@@ -13,7 +13,7 @@
 
 A modular Python simulation of a simplified lateral-directional flight-control system inspired by F-16 control-system architecture.
 
-The project demonstrates command shaping, state-feedback control, second-order actuator dynamics, actuator saturation, closed-loop response analysis, pytest coverage, CI, security scanning, and a generated 3D attitude animation.
+The project demonstrates command shaping, state-feedback control, second-order actuator dynamics, actuator saturation, closed-loop response analysis, pytest coverage, CI, security scanning, a generated 3D attitude GIF, and a browser-based 3D lateral-flight animation.
 
 > Educational and portfolio project only. This is not a certified flight-control system and must not be used for real aircraft operation, safety-critical control, or deployment.
 
@@ -28,6 +28,7 @@ The project demonstrates command shaping, state-feedback control, second-order a
 - Position, rate, and acceleration saturation
 - Closed-loop roll-rate and bank-angle plotting
 - F-16-inspired 3D aircraft attitude GIF with flight path, vapor trails, afterburner effect, and telemetry
+- Self-contained browser 3D lateral-flight animation driven by simulated bank, yaw-rate, roll-rate, and sideslip states
 - Parameter and input validation for simulation components
 - Pytest suite and GitHub Actions CI
 - CodeQL security analysis, OpenSSF Scorecard, and Dependabot configuration
@@ -37,6 +38,22 @@ The project demonstrates command shaping, state-feedback control, second-order a
 ![System architecture](architecture/system_architecture.svg)
 
 The diagram shows one closed-loop system architecture with expanded detail views for the flight-control computer and the simulation/output path. It is maintained as a versioned SVG asset so the README renders consistently without depending on Mermaid support.
+
+## 3D Lateral-Flight Animation
+
+Run the demo to generate both animation formats:
+
+```bash
+python scripts/run_demo.py
+```
+
+Then open:
+
+```text
+outputs/f16_lateral_flight_3d.html
+```
+
+The HTML animation is self-contained and runs in a browser without a web server or external JavaScript libraries. It renders a procedural F-16-inspired 3D aircraft, simulated lateral flight path, bank response, yaw-rate response, roll-rate telemetry, and afterburner effect from the same closed-loop history used for the engineering plots. Playback is time-based with smooth interpolation and an adjustable speed slider, so it can run slowly like a real-time monitoring display instead of jumping frame-by-frame.
 
 ## Model
 
@@ -113,9 +130,10 @@ The demo writes:
 ```text
 outputs/f16_2nd_order_actuator.png
 outputs/f16_attitude_3d.gif
+outputs/f16_lateral_flight_3d.html
 ```
 
-The animation is an engineering visualization driven by the simulated lateral-directional states. It uses an F-16-inspired visual mesh for presentation quality, while the underlying model remains the simplified educational plant described above.
+The GIF is an engineering visualization driven by the simulated lateral-directional states. The HTML file is a browser-viewable 3D lateral-flight animation generated from the same state history. Both use an F-16-inspired visual mesh for presentation quality, while the underlying model remains the simplified educational plant described above.
 
 The default animation uses `aircraft_model="f16c"`, a closer F-16C-inspired procedural mesh with single-engine nozzle, swept wings, stabilators, ventral fins, and wingtip rails. A second `aircraft_model="concept"` option is available for a more futuristic showcase style.
 
@@ -168,6 +186,7 @@ Implemented:
 - Closed-loop simulation history export
 - Roll-rate and bank-angle plot
 - 3D attitude animation
+- Browser-based 3D lateral-flight animation
 - Unit tests, CI, CodeQL, OpenSSF Scorecard, and Dependabot
 
 Not implemented:
